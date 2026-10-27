@@ -1,0 +1,17 @@
+# For running outside Unraid (or with the Compose Manager plugin).
+services:
+  streamer:
+    image: ghcr.io/shalone86/streamer:latest
+    # build: .   # or build it yourself
+    ports:
+      - "8080:8080"
+      - "6080:6080"
+    volumes:
+      - ./config:/config
+    environment:
+      VNC_PASSWORD: ""
+      RESOLUTION: 1920x1080
+    shm_size: 2gb
+    security_opt:
+      - seccomp=unconfined
+    restart: unless-stopped

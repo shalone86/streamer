@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streamer setup</title>
+<style>
+  :root { --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #5d6874; --accent: #2563eb; --line: #dde2e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #101418; --card: #1a2027; --text: #e8ecf0; --muted: #98a4b0; --accent: #6ea0ff; --line: #2b333c; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+  h2 { font-size: 18px; margin: 0 0 8px; }
+  ol { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  a.button, button { display: inline-block; background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+             padding: 10px 16px; font: inherit; text-decoration: none; cursor: pointer; }
+  input { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--line); border-radius: 8px;
+          background: var(--bg); color: var(--text); font: inherit; margin: 6px 0 10px; }
+  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+  .muted { color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Streamer</h1>
+  <p class="sub" id="status">Checking the server…</p>
+
+  <section>
+    <h2>1. Log in to your services</h2>
+    <p>Opens the server's browser. Log in to Peacock, Tubi and Sling once; the logins are saved.</p>
+    <a class="button" id="vnc" href="#" target="_blank">Open the browser view</a>
+  </section>
+
+  <section>
+    <h2>2. Put the channel on your Roku</h2>
+    <ol>
+      <li>Turn on developer mode: on the Roku remote press <b>Home ×3, Up ×2, Right, Left, Right, Left, Right</b>,
+          note the address it shows, choose <b>Enable installer and restart</b>, and set a password.</li>
+      <li>Download the channel (the server's address is built in):
+        <label class="muted" for="server">Server address the Roku should use</label>
+        <input id="server">
+        <a class="button" id="zip" href="#">Download Roku channel</a></li>
+      <li>On a computer, open the address the Roku showed (e.g. <code>http://192.168.1.50</code>),
+          log in as <code>rokudev</code> with your password, choose the zip, and press <b>Install</b>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Test from here</h2>
+    <div class="row">
+      <button data-open="peacock">Open Peacock</button>
+      <button data-open="tubi">Open Tubi</button>
+      <button data-open="sling">Open Sling</button>
+    </div>
+    <p class="muted" id="result"></p>
+  </section>
+</main>
+<script>
+  const host = location.hostname;
+  document.getElementById("vnc").href = `http://${host}:6080/vnc.html?autoconnect=1&resize=scale`;
+  const server = document.getElementById("server");
+  server.value = location.origin;
+  const zip = document.getElementById("zip");
+  const setZip = () => zip.href = "/roku-channel.zip?server=" + encodeURIComponent(server.value.trim());
+  server.addEventListener("input", setZip);
+  setZip();
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    server.insertAdjacentHTML("afterend",
+      '<p class="muted">Tip: use the server\'s IP address (like http://192.168.1.10:8080); the Roku may not know the name.</p>');
+  }
+
+  fetch("/api/status").then(r => r.json()).then(s => {
+    document.getElementById("status").textContent =
+      "Server is running" + (s.streaming ? " and streaming to the Roku." : ".");
+  }).catch(() => document.getElementById("status").textContent = "Can't reach the server.");
+
+  for (const b of document.querySelectorAll("[data-open]")) {
+    b.addEventListener("click", async () => {
+      const r = await fetch("/api/open?service=" + b.dataset.open).then(r => r.json()).catch(e => ({ error: String(e) }));
+      document.getElementById("result").textContent = r.ok
+        ? `Opened ${b.textContent.replace("Open ", "")} in the server's browser.`
+        : "Didn't work: " + r.error;
+    });
+  }
+</script>
+</body>
+</html>

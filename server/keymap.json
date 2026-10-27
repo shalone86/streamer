@@ -1,0 +1,30 @@
+{
+  "keys": {
+    "up": {"key": "Up"},
+    "down": {"key": "Down"},
+    "left": {"key": "Left"},
+    "right": {"key": "Right"},
+    "OK": {"key": "Return"},
+    "play": {"key": "space"},
+    "playonly": {"key": "space"},
+    "pause": {"key": "space"},
+    "rewind": {"key": "shift+Tab"},
+    "fastforward": {"key": "Tab"},
+    "replay": {"key": "f"},
+    "back": {"key": "alt+Left"}
+  },
+  "mouse": {
+    "up": {"move": [0, -40]},
+    "down": {"move": [0, 40]},
+    "left": {"move": [-40, 0]},
+    "right": {"move": [40, 0]},
+    "OK": {"click": 1},
+    "play": {"key": "space"},
+    "playonly": {"key": "space"},
+    "pause": {"key": "space"},
+    "rewind": {"click": 4},
+    "fastforward": {"click": 5},
+    "replay": {"key": "Escape"},
+    "back": {"key": "alt+Left"}
+  }
+}

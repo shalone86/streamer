@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>streamer</Name>
+  <Repository>ghcr.io/shalone86/streamer:latest</Repository>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Project>https://github.com/shalone86/streamer</Project>
+  <Overview>Watch Peacock, Tubi and Sling on a Roku through an ad-blocking browser on this server.</Overview>
+  <Category>MediaServer:Video</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <ExtraParams>--shm-size=2g --security-opt seccomp=unconfined</ExtraParams>
+  <Config Name="Control port" Target="8080" Default="8080" Mode="tcp" Description="Setup page, Roku channel API and the video stream." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Browser view port" Target="6080" Default="6080" Mode="tcp" Description="See and use the server's browser (to log in)." Type="Port" Display="always" Required="true" Mask="false">6080</Config>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/streamer" Mode="rw" Description="Browser profile (your logins) and settings." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/streamer</Config>
+  <Config Name="Browser view password" Target="VNC_PASSWORD" Default="" Mode="" Description="Password for the browser view. Recommended: anyone on your network could otherwise use your logged-in accounts." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Resolution" Target="RESOLUTION" Default="1920x1080" Mode="" Description="Stream size: 1920x1080 or 1280x720." Type="Variable" Display="always" Required="false" Mask="false">1920x1080</Config>
+  <Config Name="Encoder preset" Target="PRESET" Default="veryfast" Mode="" Description="x264 preset: veryfast (better picture) or superfast (less CPU)." Type="Variable" Display="advanced" Required="false" Mask="false">veryfast</Config>
+  <Config Name="Bitrate" Target="BITRATE" Default="6M" Mode="" Description="Stream bitrate. Lower (4M) if the Roku buffers on Wi-Fi." Type="Variable" Display="advanced" Required="false" Mask="false">6M</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+</Container>
