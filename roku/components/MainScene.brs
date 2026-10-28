@@ -181,13 +181,14 @@ function urlEncode(text as string) as string
     safe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
     bytes = CreateObject("roByteArray")
     bytes.FromAsciiString(text) ' the string's UTF-8 bytes
+    hex = bytes.ToHexString() ' two upper-case hex digits per byte
     out = ""
-    for each b in bytes
-        c = Chr(b)
-        if b < 128 and Instr(1, safe, c) > 0
+    for i = 0 to bytes.Count() - 1
+        c = Chr(bytes[i])
+        if bytes[i] < 128 and Instr(1, safe, c) > 0
             out = out + c
         else
-            out = out + "%" + Right("0" + StrI(b, 16), 2).ToUpper()
+            out = out + "%" + Mid(hex, i * 2 + 1, 2)
         end if
     end for
     return out
