@@ -20,6 +20,9 @@
 
         <Video id="video" width="1920" height="1080" visible="false" enableUI="false" />
 
+        <!-- Holds the focus while watching, so every remote key reaches onKeyEvent -->
+        <Group id="keys" />
+
         <Rectangle id="badge" color="0x000000B0" width="380" height="64" translation="[1500,40]" visible="false">
             <Label id="badgeText" width="380" height="64" horizAlign="center" vertAlign="center"
                 font="font:SmallBoldSystemFont" color="0xFFFFFFFF" />

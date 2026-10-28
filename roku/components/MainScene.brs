@@ -5,6 +5,7 @@ sub init()
     m.menu = m.top.findNode("menu")
     m.status = m.top.findNode("status")
     m.video = m.top.findNode("video")
+    m.keys = m.top.findNode("keys")
     m.badge = m.top.findNode("badge")
     m.badgeText = m.top.findNode("badgeText")
     m.repeatTimer = m.top.findNode("repeatTimer")
@@ -101,6 +102,7 @@ end function
 ' ------------------------------------------------------------ menu
 
 sub onItemSelected()
+    if m.watching then return
     item = m.items[m.list.itemSelected]
     if item.action = "server"
         askServer()
@@ -166,7 +168,8 @@ sub playStream()
     m.video.visible = true
     m.video.control = "play"
     m.watching = true
-    m.top.setFocus(true)
+    ' Focusing the Scene leaves the hidden list focused (it would eat the arrows and OK).
+    m.keys.setFocus(true)
     m.mode = "keys"
     showBadge("Hold Back to leave")
 end sub
