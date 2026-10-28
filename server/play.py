@@ -93,3 +93,42 @@ def autoplay(ws_url, service, timeout=40):
         return "not playing"
     finally:
         page.close()
+
+
+# Play/pause and skipping, done on the video itself so it works whatever has the
+# keyboard focus. Netflix has to be asked through its own player (moving its video's
+# currentTime breaks playback); the rest use the biggest video on the page.
+MEDIA_JS = """((cmd, by) => {
+  try {
+    const api = window.netflix && netflix.appContext.state.playerApp.getAPI().videoPlayer;
+    const ids = api ? api.getAllPlayerSessionIds() : [];
+    const p = ids.length && api.getVideoPlayerBySessionId(ids.find(i => i.startsWith('watch')) || ids[0]);
+    if (p) {
+      if (cmd === 'toggle') { if (p.isPaused()) { p.play(); return 'Playing'; } p.pause(); return 'Paused'; }
+      p.seek(Math.max(0, p.getCurrentTime() + by * 1000));
+      return (by > 0 ? '+' : '') + by + 's';
+    }
+  } catch (e) {}
+  // Sling's player starts its video again when it's paused behind its back: use its button.
+  const button = name => document.querySelector('[data-testid="player-button-' + name + '"]');
+  if (cmd === 'toggle' && (button('pause') || button('play'))) {
+    const pausing = !!button('pause');
+    (button('pause') || button('play')).click();
+    return pausing ? 'Paused' : 'Playing';
+  }
+  const v = [...document.querySelectorAll('video')].filter(v => v.clientWidth > 200 && v.readyState > 0)
+    .sort((a, b) => b.clientWidth * b.clientHeight - a.clientWidth * a.clientHeight)[0];
+  if (!v) return '';
+  if (cmd === 'toggle') { if (v.paused) { v.play(); return 'Playing'; } v.pause(); return 'Paused'; }
+  v.currentTime = Math.max(0, v.currentTime + by);
+  return (by > 0 ? '+' : '') + by + 's';
+})(%s, %s)"""
+
+
+def media(ws_url, cmd, by=0):
+    """Toggle or skip the playing video. Returns what to show ("Paused", "+10s"), or "" if no video."""
+    page = Page(ws_url)
+    try:
+        return page.js(MEDIA_JS % (json.dumps(cmd), json.dumps(by)), gesture=True) or ""
+    finally:
+        page.close()

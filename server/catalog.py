@@ -17,11 +17,12 @@ import websocket
 
 JUSTWATCH = "https://apis.justwatch.com/graphql"
 IMAGES = "https://images.justwatch.com"
-PER_ROW = 40
+PER_SERVICE = 15  # titles per service per row
 REFRESH = 12 * 3600
 
 # JustWatch package -> service, best first: a title on several services opens in the first.
-PACKAGES = {"nfx": "netflix", "pct": "peacock", "pcp": "peacock", "tbv": "tubi"}
+# Peacock is last: it refuses to play in this browser (its license server says no).
+PACKAGES = {"nfx": "netflix", "tbv": "tubi", "pct": "peacock", "pcp": "peacock"}
 
 GENRES = [
     ("Popular", None), ("Comedy", "cmy"), ("Action", "act"), ("Drama", "drm"),
@@ -55,7 +56,7 @@ TITLE_FIELDS = """
 QUERY = "query($f: TitleFilter, $first: Int!) { popularTitles(country: US, first: $first, filter: $f) {%s} }" % TITLE_FIELDS
 
 
-def justwatch(filt, first=PER_ROW):
+def justwatch(filt, first=40):
     body = json.dumps({"query": QUERY, "variables": {"f": filt, "first": first}}).encode()
     req = urllib.request.Request(JUSTWATCH, body, {"content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -166,16 +167,23 @@ def mix(*lists):
 
 
 def build(cdp):
+    # Each service's popular titles separately, then taken in turns: one list of all
+    # of them is mostly Netflix, with Tubi far down the row.
+    services = {}
+    for package, service in PACKAGES.items():
+        services.setdefault(service, []).append(package)
     rows = {}
     for name, genre in GENRES:
-        filt = {"packages": list(PACKAGES)}
-        if genre:
-            filt["genres"] = [genre]
-        try:
-            rows[name] = justwatch(filt)
-        except Exception as e:
-            print(f"catalog: {name}: {e}")
-            rows[name] = []
+        lists = []
+        for packages in services.values():
+            filt = {"packages": packages}
+            if genre:
+                filt["genres"] = [genre]
+            try:
+                lists.append(justwatch(filt, PER_SERVICE))
+            except Exception as e:
+                print(f"catalog: {name} {packages}: {e}")
+        rows[name] = lists
     try:
         sling_items = sling(cdp)
     except Exception as e:
@@ -187,8 +195,8 @@ def build(cdp):
     for t in sling_items:
         by_row.setdefault(t.pop("row"), []).append(t)
     out = []
-    for name, items in rows.items():
-        merged = mix(items, by_row.get(name, []))
+    for name, lists in rows.items():
+        merged = mix(*lists, by_row.get(name, []))
         if merged:
             out.append({"title": name, "items": merged})
     return {"updated": int(time.time()), "rows": out, "sling": [t for l in by_row.values() for t in l]}

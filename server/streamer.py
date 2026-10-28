@@ -133,7 +133,15 @@ def unpark_pointer():
 
 
 def press(action, repeat=0):
-    """Do one keymap action: {"key": "alt+Left"}, {"move": [dx, dy]}, {"click": 1}."""
+    """Do one keymap action: {"key": "alt+Left"}, {"move": [dx, dy]}, {"click": 1}, or
+    {"media": "toggle" | "seek", "by": seconds, "else": action} on the playing video
+    (the "else" action when there's none). Returns a word for the Roku to show, or ""."""
+    if "media" in action:
+        pages = cdp_pages()
+        shown = play.media(pages[0]["webSocketDebuggerUrl"], action["media"], action.get("by", 0)) if pages else ""
+        if shown or "else" not in action:
+            return shown
+        return press(action["else"], repeat)
     if "key" in action:
         xdotool("key", "--clearmodifiers", action["key"])
     elif "move" in action:
@@ -336,8 +344,8 @@ class Handler(BaseHTTPRequestHandler):
         action = load_keymap().get(mode, {}).get(q.get("b", ""))
         if not action:
             return self.send(404, {"ok": False, "error": "no action for that button"})
-        press(action, int(q.get("n", "0") or 0))
-        self.send(200, {"ok": True})
+        shown = press(action, int(q.get("n", "0") or 0))
+        self.send(200, {"ok": True, "badge": shown or ""})
 
     def hls(self, name):
         if not re.fullmatch(r"[\w.-]+", name):

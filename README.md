@@ -76,8 +76,8 @@ so press once and wait. Hold **Back** to return to the home screen.
 |---|---|---|
 | Arrows | arrow keys | move the pointer (hold to speed up) |
 | OK | Enter | click |
-| Play/Pause | space (play/pause) | space |
-| Rewind / Fast-fwd | previous / next button on the page (Shift+Tab / Tab) | scroll up / down |
+| Play/Pause | pause / play the video | same |
+| Rewind / Fast-fwd | back / ahead 10 seconds (on a page without a video: previous / next button, Shift+Tab / Tab) | scroll up / down |
 | Replay ↺ | full screen (`f`) | Esc (leave full screen, close popups) |
 | ✱ | switch to mouse mode | switch to keyboard mode |
 | Back | browser Back | browser Back |

@@ -95,7 +95,10 @@ sub onResponse()
         onCatalog(r)
     else if r.tag = "search"
         onSearch(r)
-    else if r.tag = "button" and r.code <> 200 and r.code <> 404
+    else if r.tag = "button" and r.code = 200
+        data = ParseJson(r.body)
+        if data <> invalid and data.badge <> invalid and data.badge <> "" then showBadge(data.badge)
+    else if r.tag = "button" and r.code <> 404
         showBadge("Server not responding")
     end if
 end sub
@@ -246,8 +249,8 @@ sub showHelp()
     dialog.title = "While watching"
     dialog.message = [
         "Arrows, OK: move and select on the page",
-        "Play: play / pause",
-        "Rewind / Fast-fwd: previous / next button on the page (Tab)",
+        "Play: pause / play",
+        "Rewind / Fast-fwd: back / ahead 10 seconds",
         "Replay: full screen (f)",
         "* : switch to a mouse pointer and back",
         "Back: previous page. Hold Back: return here",
