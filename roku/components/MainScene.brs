@@ -20,6 +20,7 @@ sub init()
     if m.server = "" then m.server = DefaultServerUrl()
 
     m.items = [
+        { title: "Netflix", service: "netflix", action: "watch" },
         { title: "Peacock", service: "peacock", action: "watch" },
         { title: "Tubi", service: "tubi", action: "watch" },
         { title: "Sling", service: "sling", action: "watch" },

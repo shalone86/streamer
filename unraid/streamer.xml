@@ -6,7 +6,7 @@
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
   <Project>https://github.com/shalone86/streamer</Project>
-  <Overview>Watch Peacock, Tubi and Sling on a Roku through an ad-blocking browser on this server.</Overview>
+  <Overview>Watch Netflix, Peacock, Tubi and Sling on a Roku through an ad-blocking browser on this server.</Overview>
   <Category>MediaServer:Video</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
   <ExtraParams>--shm-size=2g --security-opt seccomp=unconfined</ExtraParams>

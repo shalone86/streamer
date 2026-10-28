@@ -47,9 +47,10 @@ HLS_TIME = os.environ.get("HLS_TIME", "1")
 IDLE_STOP = int(os.environ.get("IDLE_STOP", "45"))  # seconds without a Roku request
 
 SERVICES = {
+    "netflix": "https://www.netflix.com/browse",
     "peacock": "https://www.peacocktv.com/",
     "tubi": "https://tubitv.com/",
-    "sling": "https://watch.sling.com/",
+    "sling": "https://watch.sling.com/dashboard/on_demand/on_demand_all",  # Freestream: free movies and shows
 }
 
 DEFAULT_KEYMAP = json.loads((APP / "keymap.json").read_text())

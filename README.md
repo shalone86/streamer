@@ -1,6 +1,6 @@
 # Streamer
 
-Watch Peacock, Tubi and Sling on a Roku through an ad-blocking browser.
+Watch Netflix, Peacock, Tubi and Sling on a Roku through an ad-blocking browser.
 
 The server (a Docker container on Unraid) runs Chrome with AdGuard on a virtual
 screen and turns that screen into a video stream. A homebrew Roku channel plays
@@ -40,7 +40,8 @@ Open `http://<server-ip>:8080`. That's the setup page; Unraid's **WebUI** button
 on the container goes there too.
 
 - **Open the browser view**: the server's Chrome, in your browser. Log in to
-  Peacock, Tubi and Sling. The logins are kept in `/mnt/user/appdata/streamer`.
+  Netflix, Peacock and Tubi. The logins are kept in `/mnt/user/appdata/streamer`.
+  Sling opens on its free movies and shows (Freestream), which need no login.
 - Check that AdGuard is on: press F11 to leave full screen, click the
   puzzle-piece icon at the top right, and pin AdGuard. Press F11 again to go back.
 
@@ -61,7 +62,7 @@ channel at a time.
 
 ## Using it
 
-Pick **Peacock**, **Tubi**, **Sling** or **Continue where I left off**. The video
+Pick **Netflix**, **Peacock**, **Tubi**, **Sling** or **Continue where I left off**. The video
 starts in 2–4 seconds. Everything you press arrives on screen about that much
 later, so press once and wait.
 
