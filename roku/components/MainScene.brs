@@ -23,7 +23,6 @@ sub init()
     m.menuItems = [
         { title: "Search", action: "search" },
         { title: "Netflix", service: "netflix", action: "service" },
-        { title: "Peacock", service: "peacock", action: "service" },
         { title: "Tubi", service: "tubi", action: "service" },
         { title: "Sling", service: "sling", action: "service" },
         { title: "Continue where I left off", service: "", action: "service" },
@@ -202,7 +201,7 @@ end function
 sub askSearch()
     dialog = CreateObject("roSGNode", "StandardKeyboardDialog")
     dialog.title = "Search"
-    dialog.message = ["A movie or show on Netflix, Peacock, Tubi or Sling"]
+    dialog.message = ["A movie or show on Netflix, Tubi or Sling"]
     dialog.buttons = ["Search", "Cancel"]
     dialog.observeField("buttonSelected", "onSearchDialog")
     m.top.dialog = dialog

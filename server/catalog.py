@@ -1,6 +1,6 @@
-"""What's on: titles from Netflix, Peacock, Tubi and Sling Freestream, in genre rows.
+"""What's on: titles from Netflix, Tubi and Sling Freestream, in genre rows.
 
-Netflix, Peacock and Tubi come from JustWatch (no key needed). Sling's free movies
+Netflix and Tubi come from JustWatch (no key needed). Sling's free movies
 and shows aren't in JustWatch, so they're read off Sling's own On Demand pages in
 the server's browser. The rows are kept in /config/catalog.json and refreshed
 twice a day.
@@ -21,8 +21,8 @@ PER_SERVICE = 15  # titles per service per row
 REFRESH = 12 * 3600
 
 # JustWatch package -> service, best first: a title on several services opens in the first.
-# Peacock is last: it refuses to play in this browser (its license server says no).
-PACKAGES = {"nfx": "netflix", "tbv": "tubi", "pct": "peacock", "pcp": "peacock"}
+# Peacock ("pct", "pcp") is left out: its license server won't play in Chrome on Linux.
+PACKAGES = {"nfx": "netflix", "tbv": "tubi"}
 
 GENRES = [
     ("Popular", None), ("Comedy", "cmy"), ("Action", "act"), ("Drama", "drm"),
@@ -48,12 +48,13 @@ TITLE_FIELDS = """
     content(country: US, language: "en") {
       title originalReleaseYear posterUrl backdrops { backdropUrl }
     }
-    offers(country: US, platform: WEB, filter: {packages: ["nfx", "pct", "pcp", "tbv"]}) {
+    offers(country: US, platform: WEB, filter: {packages: %s}) {
       standardWebURL package { shortName }
     }
   } }
 """
-QUERY = "query($f: TitleFilter, $first: Int!) { popularTitles(country: US, first: $first, filter: $f) {%s} }" % TITLE_FIELDS
+QUERY = "query($f: TitleFilter, $first: Int!) { popularTitles(country: US, first: $first, filter: $f) {%s} }" % (
+    TITLE_FIELDS % json.dumps(list(PACKAGES)))
 
 
 def justwatch(filt, first=40):

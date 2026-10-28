@@ -62,11 +62,12 @@ channel at a time.
 
 ## Using it
 
-The home screen shows what's on Netflix, Peacock, Tubi and Sling's free movies
+The home screen shows what's on Netflix, Tubi and Sling's free movies
 and shows, in rows by genre (Popular, Comedy, Action...), and you move around it
 like any Roku channel. The top row has **Search** and the services themselves.
-Pick a title and it opens in its service, starts, and fills the screen. The
-list comes from JustWatch (Netflix, Peacock, Tubi) and Sling's On Demand pages,
+Pick a title and it opens in its service, starts, and fills the screen. Peacock isn't in it: Peacock refuses to play in Chrome on
+Linux (its license server answers 400), so it needs a Windows browser. The
+list comes from JustWatch (Netflix, Tubi) and Sling's On Demand pages,
 is kept in `/config/catalog.json`, and is refreshed twice a day.
 
 Once a video is on, everything you press arrives on screen 2–4 seconds later,
