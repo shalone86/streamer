@@ -47,7 +47,10 @@ RESOLUTION = os.environ.get("RESOLUTION", "1920x1080")
 FPS = os.environ.get("FPS", "30")
 BITRATE = os.environ.get("BITRATE", "6M")
 PRESET = os.environ.get("PRESET", "veryfast")
-HLS_TIME = os.environ.get("HLS_TIME", "1")
+HLS_TIME = os.environ.get("HLS_TIME", "0.5")
+# The playlist only lists the newest few segments: the Roku starts at the oldest one
+# listed, so a short list keeps it close to live (less delay after each button press).
+HLS_LIST = os.environ.get("HLS_LIST", "4")
 IDLE_STOP = int(os.environ.get("IDLE_STOP", "45"))  # seconds without a Roku request
 
 SERVICES = {
@@ -176,6 +179,7 @@ class Stream:
         shutil.rmtree(HLS_DIR, ignore_errors=True)
         HLS_DIR.mkdir(parents=True, exist_ok=True)
         fps = int(FPS)
+        gop = max(1, round(fps * float(HLS_TIME)))  # a keyframe starts every segment
         cmd = [
             "ffmpeg", "-hide_banner", "-loglevel", "warning",
             "-thread_queue_size", "512",
@@ -187,10 +191,10 @@ class Stream:
             "-c:v", "libx264", "-preset", PRESET, "-tune", "zerolatency",
             "-profile:v", "high", "-level", "4.1", "-pix_fmt", "yuv420p",
             "-b:v", BITRATE, "-maxrate", BITRATE, "-bufsize", BITRATE,
-            "-g", str(fps * int(HLS_TIME)), "-keyint_min", str(fps * int(HLS_TIME)),
+            "-g", str(gop), "-keyint_min", str(gop),
             "-sc_threshold", "0",
             "-c:a", "aac", "-b:a", "160k", "-af", "aresample=async=1",
-            "-f", "hls", "-hls_time", HLS_TIME, "-hls_list_size", "6",
+            "-f", "hls", "-hls_time", HLS_TIME, "-hls_list_size", HLS_LIST,
             "-hls_delete_threshold", "6",
             "-hls_flags", "delete_segments+independent_segments",
             "-hls_segment_filename", str(HLS_DIR / "seg%05d.ts"),
@@ -354,8 +358,13 @@ class Handler(BaseHTTPRequestHandler):
         path = HLS_DIR / name
         if not path.exists():
             return self.send(404)
+        body = path.read_bytes()
+        if name.endswith(".m3u8"):
+            # ffmpeg rounds sub-second segments down to a target duration of 0, which
+            # players may reject; it must be at least the longest segment.
+            body = body.replace(b"#EXT-X-TARGETDURATION:0\n", b"#EXT-X-TARGETDURATION:1\n")
         ctype = "application/vnd.apple.mpegurl" if name.endswith(".m3u8") else "video/mp2t"
-        self.send(200, path.read_bytes(), ctype)
+        self.send(200, body, ctype)
 
 
 def main():

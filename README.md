@@ -99,7 +99,8 @@ The stream stops by itself 45 seconds after the Roku stops watching.
 | `BITRATE` | `6M` | lower to `4M` if the Roku buffers |
 | `PRESET` | `veryfast` | `superfast` uses less CPU |
 | `FPS` | `30` | |
-| `HLS_TIME` | `1` | seconds per video segment; `2` is steadier on weak Wi-Fi, but adds delay |
+| `HLS_TIME` | `0.5` | seconds per video segment; `1` or `2` is steadier on weak Wi-Fi, but adds delay |
+| `HLS_LIST` | `4` | segments in the playlist; the Roku starts this far behind live, so more is steadier but slower |
 | `IDLE_STOP` | `45` | seconds before an unwatched stream stops |
 | `CHROME_FLAGS` | | extra Chrome flags |
 | `CHROME_NO_SANDBOX` | | `1` if Chrome won't start without `seccomp=unconfined` |
@@ -110,7 +111,7 @@ The stream stops by itself 45 seconds after the Roku stops watching.
   not its name. On the channel's menu choose **Server address...** to change it.
 - **Black picture:** check the same page in the browser view. If it's black
   there too, the service refused to play.
-- **Stutters on the Roku:** lower `BITRATE` to `4M`, or set `HLS_TIME` to `2`.
+- **Stutters on the Roku:** lower `BITRATE` to `4M`, or set `HLS_TIME` to `1` and `HLS_LIST` to `6`.
 - **Logs:** Unraid Docker tab → streamer → **Logs**.
 
 ## Keep it at home
