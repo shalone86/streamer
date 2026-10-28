@@ -5,6 +5,9 @@ end sub
 sub serve()
     port = CreateObject("roMessagePort")
     m.top.observeField("request", port)
+    ' A request set before this thread started observing (the first one) sends no event.
+    first = m.top.request
+    if first <> invalid and first.url <> invalid then send(first)
     while true
         msg = wait(0, port)
         if type(msg) = "roSGNodeEvent"
