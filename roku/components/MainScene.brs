@@ -1,7 +1,7 @@
-' The menu, and the stream from the server with the remote's buttons sent back to it.
+' What's on (genre rows and search), and the stream from the server with the remote's buttons sent back to it.
 
 sub init()
-    m.list = m.top.findNode("list")
+    m.rows = m.top.findNode("rows")
     m.menu = m.top.findNode("menu")
     m.status = m.top.findNode("status")
     m.video = m.top.findNode("video")
@@ -20,20 +20,23 @@ sub init()
     m.server = m.registry.Read("server")
     if m.server = "" then m.server = DefaultServerUrl()
 
-    m.items = [
-        { title: "Netflix", service: "netflix", action: "watch" },
-        { title: "Peacock", service: "peacock", action: "watch" },
-        { title: "Tubi", service: "tubi", action: "watch" },
-        { title: "Sling", service: "sling", action: "watch" },
-        { title: "Continue where I left off", service: "", action: "watch" },
-        { title: "Server address...", service: "", action: "server" },
+    m.menuItems = [
+        { title: "Search", action: "search" },
+        { title: "Netflix", service: "netflix", action: "service" },
+        { title: "Peacock", service: "peacock", action: "service" },
+        { title: "Tubi", service: "tubi", action: "service" },
+        { title: "Sling", service: "sling", action: "service" },
+        { title: "Continue where I left off", service: "", action: "service" },
+        { title: "Help", action: "help" },
+        { title: "Server address...", action: "server" },
     ]
-    content = CreateObject("roSGNode", "ContentNode")
-    for each item in m.items
-        content.createChild("ContentNode").title = item.title
-    end for
-    m.list.content = content
-    m.list.observeField("itemSelected", "onItemSelected")
+    m.home = makeRows([])
+    m.rows.content = m.home
+    m.showingResults = false
+    m.rows.observeField("rowItemSelected", "onTileSelected")
+    m.retryTimer = CreateObject("roSGNode", "Timer")
+    m.retryTimer.duration = 20
+    m.retryTimer.observeField("fire", "loadCatalog")
 
     m.video.observeField("state", "onVideoState")
     m.repeatTimer.observeField("fire", "onRepeat")
@@ -46,7 +49,7 @@ sub init()
     m.heldKey = ""
     m.repeatCount = 0
 
-    m.list.setFocus(true)
+    m.rows.setFocus(true)
     checkServer()
 end sub
 
@@ -72,6 +75,7 @@ sub onResponse()
     if r.tag = "status"
         if ok
             m.status.text = "Connected to " + m.server
+            loadCatalog()
         else
             m.status.text = "Can't reach " + m.server + ". Is the server running? Check the address (last item)."
         end if
@@ -87,6 +91,10 @@ sub onResponse()
         else
             failStart("The stream didn't start" + errorText(r))
         end if
+    else if r.tag = "catalog"
+        onCatalog(r)
+    else if r.tag = "search"
+        onSearch(r)
     else if r.tag = "button" and r.code <> 200 and r.code <> 404
         showBadge("Server not responding")
     end if
@@ -99,26 +107,171 @@ function errorText(r as object) as string
     return " (error " + r.code.ToStr() + ")."
 end function
 
-' ------------------------------------------------------------ menu
+' ------------------------------------------------------------ rows
 
-sub onItemSelected()
+' The menu row, then one row per genre: [{title, items: [{title, year, img, service, url}]}]
+function makeRows(genres as object) as object
+    root = CreateObject("roSGNode", "ContentNode")
+    menu = root.createChild("ContentNode")
+    menu.title = "Menu"
+    for each item in m.menuItems
+        tile = menu.createChild("ContentNode")
+        tile.title = item.title
+        fields = { action: item.action, service: "", url: "", year: "" }
+        if item.service <> invalid then fields.service = item.service
+        tile.addFields(fields)
+    end for
+    for each genre in genres
+        row = root.createChild("ContentNode")
+        row.title = genre.title
+        for each t in genre.items
+            tile = row.createChild("ContentNode")
+            tile.title = t.title
+            tile.HDPosterUrl = t.img
+            year = ""
+            if t.year <> invalid then year = t.year.ToStr()
+            tile.addFields({ action: "title", service: t.service, url: t.url, year: year })
+        end for
+    end for
+    return root
+end function
+
+sub loadCatalog()
+    callServer("/api/catalog", "catalog")
+end sub
+
+sub onCatalog(r as object)
+    data = invalid
+    if r.code = 200 then data = ParseJson(r.body)
+    if data = invalid
+        m.status.text = "Couldn't get the list of titles" + errorText(r)
+        return
+    end if
+    if data.rows.Count() = 0
+        m.status.text = "Getting the list of titles for the first time (a minute or two)..."
+        m.retryTimer.control = "start"
+        return
+    end if
+    m.home = makeRows(data.rows)
+    if not m.showingResults then m.rows.content = m.home
+end sub
+
+sub onTileSelected()
     if m.watching then return
-    item = m.items[m.list.itemSelected]
-    if item.action = "server"
+    at = m.rows.rowItemSelected
+    tile = m.rows.content.getChild(at[0]).getChild(at[1])
+    if tile.action = "title"
+        startWatching("/api/open?play=1&url=" + urlEncode(tile.url))
+    else if tile.action = "service"
+        if tile.service = ""
+            startWatching("")
+        else
+            startWatching("/api/open?service=" + tile.service)
+        end if
+    else if tile.action = "search"
+        askSearch()
+    else if tile.action = "help"
+        showHelp()
+    else if tile.action = "server"
         askServer()
-    else
-        startWatching(item.service)
     end if
 end sub
 
-sub startWatching(service as string)
+function urlEncode(text as string) as string
+    safe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
+    bytes = CreateObject("roByteArray")
+    bytes.FromAsciiString(text) ' the string's UTF-8 bytes
+    out = ""
+    for each b in bytes
+        c = Chr(b)
+        if b < 128 and Instr(1, safe, c) > 0
+            out = out + c
+        else
+            out = out + "%" + Right("0" + StrI(b, 16), 2).ToUpper()
+        end if
+    end for
+    return out
+end function
+
+' ------------------------------------------------------------ search
+
+sub askSearch()
+    dialog = CreateObject("roSGNode", "StandardKeyboardDialog")
+    dialog.title = "Search"
+    dialog.message = ["A movie or show on Netflix, Peacock, Tubi or Sling"]
+    dialog.buttons = ["Search", "Cancel"]
+    dialog.observeField("buttonSelected", "onSearchDialog")
+    m.top.dialog = dialog
+end sub
+
+sub onSearchDialog()
+    dialog = m.top.dialog
+    query = dialog.text.Trim()
+    if dialog.buttonSelected = 0 and query <> ""
+        m.query = query
+        m.status.text = "Searching for " + query + "..."
+        callServer("/api/search?q=" + urlEncode(query), "search")
+    end if
+    dialog.close = true
+    m.rows.setFocus(true)
+end sub
+
+sub onSearch(r as object)
+    data = invalid
+    if r.code = 200 then data = ParseJson(r.body)
+    if data = invalid
+        m.status.text = "Search didn't work" + errorText(r)
+        return
+    end if
+    if data.items.Count() = 0
+        m.status.text = "Nothing found for " + m.query
+        return
+    end if
+    m.rows.content = makeRows([{ title: "Results for " + Chr(34) + m.query + Chr(34), items: data.items }])
+    m.rows.jumpToRowItem = [1, 0]
+    m.showingResults = true
+    m.status.text = "Back: all titles"
+end sub
+
+sub showHome()
+    m.showingResults = false
+    m.rows.content = m.home
+    m.rows.jumpToRowItem = [0, 0]
+    m.status.text = "Connected to " + m.server
+end sub
+
+sub showHelp()
+    dialog = CreateObject("roSGNode", "StandardMessageDialog")
+    dialog.title = "While watching"
+    dialog.message = [
+        "Arrows, OK: move and select on the page",
+        "Play: play / pause",
+        "Rewind / Fast-fwd: previous / next button on the page (Tab)",
+        "Replay: full screen (f)",
+        "* : switch to a mouse pointer and back",
+        "Back: previous page. Hold Back: return here",
+    ]
+    dialog.buttons = ["OK"]
+    dialog.observeField("buttonSelected", "closeDialog")
+    m.top.dialog = dialog
+end sub
+
+sub closeDialog()
+    m.top.dialog.close = true
+    m.rows.setFocus(true)
+end sub
+
+' ------------------------------------------------------------ watching
+
+' openPath: "/api/open?..." to load something first, or "" to keep what's on screen.
+sub startWatching(openPath as string)
     if m.starting then return
     m.starting = true
     m.status.text = "Starting..."
-    if service = ""
+    if openPath = ""
         callServer("/api/stream/start", "start")
     else
-        callServer("/api/open?service=" + service, "open")
+        callServer(openPath, "open")
     end if
 end sub
 
@@ -152,10 +305,8 @@ sub onServerDialog()
         checkServer()
     end if
     dialog.close = true
-    m.list.setFocus(true)
+    m.rows.setFocus(true)
 end sub
-
-' ------------------------------------------------------------ watching
 
 sub playStream()
     m.starting = false
@@ -181,7 +332,7 @@ sub stopWatching()
     m.video.visible = false
     m.menu.visible = true
     m.status.text = "Connected to " + m.server
-    m.list.setFocus(true)
+    m.rows.setFocus(true)
     callServer("/api/stream/stop", "stop")
 end sub
 
@@ -220,7 +371,14 @@ sub hideBadge()
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
-    if not m.watching then return false
+    if not m.watching
+        ' Back from search results goes back to all titles; otherwise it leaves the channel.
+        if key = "back" and press and m.showingResults
+            showHome()
+            return true
+        end if
+        return false
+    end if
 
     if key = "back"
         ' A short press is the browser's Back; holding it returns to the menu.

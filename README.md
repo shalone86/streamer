@@ -62,9 +62,15 @@ channel at a time.
 
 ## Using it
 
-Pick **Netflix**, **Peacock**, **Tubi**, **Sling** or **Continue where I left off**. The video
-starts in 2–4 seconds. Everything you press arrives on screen about that much
-later, so press once and wait.
+The home screen shows what's on Netflix, Peacock, Tubi and Sling's free movies
+and shows, in rows by genre (Popular, Comedy, Action...), and you move around it
+like any Roku channel. The top row has **Search** and the services themselves.
+Pick a title and it opens in its service, starts, and fills the screen. The
+list comes from JustWatch (Netflix, Peacock, Tubi) and Sling's On Demand pages,
+is kept in `/config/catalog.json`, and is refreshed twice a day.
+
+Once a video is on, everything you press arrives on screen 2–4 seconds later,
+so press once and wait. Hold **Back** to return to the home screen.
 
 | Button | Keyboard mode (default) | Mouse mode |
 |---|---|---|

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One tile in a row: the title's picture, its name, and which service it's on.
+     Menu tiles (Search, a service...) have no picture and show their name big. -->
+<component name="TitleTile" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="show" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/TitleTile.brs" />
+    <children>
+        <Rectangle id="frame" width="384" height="216" color="0x222B34FF" />
+        <Poster id="img" width="384" height="216" loadDisplayMode="scaleToZoom" />
+        <Label id="big" width="344" height="216" translation="[20,0]" horizAlign="center"
+            vertAlign="center" wrap="true" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+        <Rectangle id="badge" translation="[10,10]" width="110" height="34" visible="false">
+            <Label id="badgeText" width="110" height="34" horizAlign="center" vertAlign="center"
+                font="font:SmallestBoldSystemFont" color="0xFFFFFFFF" />
+        </Rectangle>
+        <Label id="name" translation="[0,226]" width="384" font="font:SmallSystemFont"
+            color="0xD8DEE4FF" />
+    </children>
+</component>

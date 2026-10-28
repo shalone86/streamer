@@ -6,16 +6,17 @@
         <Rectangle id="bg" color="0x101418FF" width="1920" height="1080" />
 
         <Group id="menu">
-            <Label id="title" text="Streamer" translation="[160,110]"
+            <Label id="title" text="Streamer" translation="[80,40]"
                 font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
-            <Label id="status" translation="[160,190]" width="1600"
+            <Label id="status" translation="[420,58]" width="1420"
                 font="font:SmallSystemFont" color="0x98A4B0FF" />
-            <LabelList id="list" translation="[160,290]" itemSize="[900,84]" itemSpacing="[0,12]"
-                textHorizAlign="left" color="0xE8ECF0FF" focusedColor="0x101418FF"
-                focusBitmapBlendColor="0xFFFFFFFF" />
-            <Label id="help" translation="[1160,300]" width="620" wrap="true"
-                font="font:SmallSystemFont" color="0x98A4B0FF"
-                text="While watching:&#10;&#10;Arrows, OK: move and select on the page&#10;Play: play / pause&#10;Rewind / Fast-fwd: previous / next button on the page (Tab)&#10;Replay: full screen (f)&#10;* : switch to a mouse pointer and back&#10;Back: previous page&#10;Hold Back: return here" />
+            <!-- Row 0 is the menu (Search, the services...), then a row per genre -->
+            <RowList id="rows" translation="[80,150]" itemComponentName="TitleTile"
+                numRows="3" itemSize="[1780,300]" itemSpacing="[0,10]"
+                rowItemSize="[[384,262]]" rowItemSpacing="[[24,0]]"
+                showRowLabel="[true]" rowLabelOffset="[[0,10]]" rowLabelColor="0xFFFFFFFF"
+                rowLabelFont="font:MediumBoldSystemFont"
+                rowFocusAnimationStyle="floatingFocus" vertFocusAnimationStyle="floatingFocus" />
         </Group>
 
         <Video id="video" width="1920" height="1080" visible="false" enableUI="false" />

@@ -1,6 +1,7 @@
 """Control server: the Roku channel talks to this.
 
-- /api/open      points the browser at a service (or any https URL)
+- /api/catalog   what's on, in genre rows; /api/search?q= finds titles
+- /api/open      points the browser at a service (or any https URL; play=1 starts it)
 - /api/stream/*  starts and stops the screen capture (ffmpeg -> HLS in /tmp/hls)
 - /api/button    turns a Roku remote button into a key press or mouse action
 - /hls/...       the video stream the Roku plays
@@ -23,6 +24,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import websocket
+
+import catalog
+import play
 
 APP = Path(__file__).resolve().parent
 ROKU_DIR = Path(os.environ.get("ROKU_DIR", APP.parent / "roku"))
@@ -92,6 +96,17 @@ def browser_open(url):
         urllib.request.urlopen(f"{CDP}/json/close/{other['id']}", timeout=5).close()
     urllib.request.urlopen(f"{CDP}/json/activate/{page['id']}", timeout=5).close()
     focus_browser()
+    return page
+
+
+def start_title(page, url):
+    """Press the title's Watch button and make it full screen, in the background."""
+    def run():
+        try:
+            print(f"play: {url}: {play.autoplay(page['webSocketDebuggerUrl'], catalog.service_of(url))}")
+        except Exception as e:
+            print(f"play: {url}: {e!r}")
+    threading.Thread(target=run, daemon=True).start()
 
 
 def xdotool(*args):
@@ -212,6 +227,7 @@ class Stream:
 
 
 STREAM = Stream()
+CATALOG = catalog.Catalog(CONFIG_DIR / "catalog.json", CDP)
 
 
 # ---------------------------------------------------------------- Roku channel
@@ -280,8 +296,14 @@ class Handler(BaseHTTPRequestHandler):
             target = SERVICES.get(q.get("service", ""), q.get("url", ""))
             if not re.match(r"https?://", target):
                 return self.send(400, {"ok": False, "error": "unknown service"})
-            browser_open(target)
+            page = browser_open(target)
+            if q.get("play") == "1":
+                start_title(page, target)
             return self.send(200, {"ok": True})
+        if path == "/api/catalog":
+            return self.send(200, CATALOG.rows())
+        if path == "/api/search":
+            return self.send(200, {"items": CATALOG.search(q.get("q", ""))})
         if path == "/api/stream/start":
             focus_browser()
             park_pointer()
@@ -332,6 +354,7 @@ def main():
     print(f"streamer: listening on :{PORT}")
     httpd = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     httpd.last_mode = "keys"
+    threading.Timer(30, CATALOG.rows).start()  # once the browser is up (Sling needs it)
     httpd.serve_forever()
 
 
